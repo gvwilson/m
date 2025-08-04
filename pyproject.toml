@@ -28,6 +28,8 @@ dependencies = []
 [project.optional-dependencies]
 dev = [
   "build",
+  "jinja2",
+  "markdown",
   "pytest",
   "ruff",
   "twine"
