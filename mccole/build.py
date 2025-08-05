@@ -8,13 +8,7 @@ from pathlib import Path
 import sys
 
 
-MARKDOWN_EXTENSIONS = [
-    "attr_list",
-    "def_list",
-    "fenced_code",
-    "md_in_html",
-    "tables"
-]
+MARKDOWN_EXTENSIONS = ["attr_list", "def_list", "fenced_code", "md_in_html", "tables"]
 
 
 def build(opt):
@@ -29,7 +23,9 @@ def construct_parser(parser):
     """Parse command-line arguments."""
     parser.add_argument("--dst", type=Path, default="docs", help="output directory")
     parser.add_argument("--src", type=Path, default=".", help="source directory")
-    parser.add_argument("--templates", type=Path, default="templates", help="templates directory")
+    parser.add_argument(
+        "--templates", type=Path, default="templates", help="templates directory"
+    )
 
 
 def _do_bibliography_links(opt, dest, doc):
@@ -37,9 +33,20 @@ def _do_bibliography_links(opt, dest, doc):
     for node in doc.select("a[href]"):
         if not node["href"].startswith("b:"):
             continue
+        assert node["href"].count(":") == 1
         key = node["href"].split(":")[1]
         node.string = key
         node["href"] = _make_root_prefix(opt, dest) + f"bibliography/#{key}"
+
+
+def _do_glossary_links(opt, dest, doc):
+    """Handle 'g:' glossary links."""
+    for node in doc.select("a[href]"):
+        if not node["href"].startswith("g:"):
+            continue
+        assert node["href"].count(":") == 1
+        key = node["href"].split(":")[1]
+        node["href"] = _make_root_prefix(opt, dest) + f"glossary/#{key}"
 
 
 def _do_root_links(opt, dest, doc):
@@ -70,8 +77,7 @@ def _do_title(opt, dest, doc):
 def _find_files(opt):
     """Collect all interesting files."""
     return [
-        path for path in Path(opt.src).glob("**/*.*")
-        if _is_interesting_file(opt, path)
+        path for path in Path(opt.src).glob("**/*.*") if _is_interesting_file(opt, path)
     ]
 
 
@@ -134,7 +140,7 @@ def _render_markdown(opt, env, source, dest):
     rendered_html = template.render(content=raw_html)
 
     doc = BeautifulSoup(rendered_html, "html.parser")
-    for func in [_do_bibliography_links, _do_root_links, _do_title]:
+    for func in [_do_bibliography_links, _do_glossary_links, _do_root_links, _do_title]:
         func(opt, dest, doc)
 
     return str(doc)
