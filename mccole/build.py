@@ -1,11 +1,13 @@
 """Build HTML site from source files."""
 
 import argparse
+from pathlib import Path
+import sys
+
 from bs4 import BeautifulSoup
 from jinja2 import Environment, FileSystemLoader
 from markdown import markdown
-from pathlib import Path
-import sys
+import tomli
 
 
 BOILERPLATE = {
@@ -19,6 +21,7 @@ MARKDOWN_EXTENSIONS = ["attr_list", "def_list", "fenced_code", "md_in_html", "ta
 
 def build(opt):
     """Main driver."""
+    opt.settings = _load_config(opt.config)
     files = _find_files(opt)
     markdown, others = _separate_files(files)
     _handle_markdown(opt, markdown)
@@ -27,6 +30,7 @@ def build(opt):
 
 def construct_parser(parser):
     """Parse command-line arguments."""
+    parser.add_argument("--config", default="pyproject.toml", help="configuration file")
     parser.add_argument("--dst", type=Path, default="docs", help="output directory")
     parser.add_argument("--src", type=Path, default=".", help="source directory")
     parser.add_argument(
@@ -53,6 +57,17 @@ def _do_glossary_links(opt, dest, doc):
         assert node["href"].count(":") == 1
         key = node["href"].split(":")[1]
         node["href"] = _make_root_prefix(opt, dest) + f"glossary/#{key}"
+
+
+def _do_markdown_links(opt, dest, doc):
+    """Handle ./SOMETHING.md links."""
+    for node in doc.select("a[href]"):
+        if not node["href"].endswith(".md"):
+            continue
+        target = str(Path(node["href"]).name)
+        if target not in BOILERPLATE:
+            continue
+        node["href"] = f"@/{BOILERPLATE[target]}/"
 
 
 def _do_root_links(opt, dest, doc):
@@ -110,24 +125,44 @@ def _is_interesting_file(opt, path):
         return False
     if str(path).startswith("."):
         return False
-    if str(path.parent.name).startswith("."):
+    if path.samefile(opt.config):
         return False
     if path.is_relative_to(opt.dst):
         return False
     if path.is_relative_to(opt.templates):
         return False
+
+    skips = opt.settings["skips"]
+    if skips and any(path.is_relative_to(s) for s in skips):
+        return False
+
     return True
+
+def _load_config(filename):
+    """Read configuration data."""
+    config = tomli.loads(Path(filename).read_text())
+
+    if ("tool" not in config) or ("mccole" not in config["tool"]):
+        _warn(f"configuration file {filename} does not have 'tool.mccole'")
+        return {
+            "skips": set()
+        }
+
+    config = config["tool"]["mccole"]
+    config["skips"] = set(config["skips"]) if "skips" in config else set()
+
+    overlap = set(BOILERPLATE.keys()) & config["skips"]
+    if overlap:
+        _warn(f"overlap between skips and renames in config {filename}: {', '.join(sorted(overlap))}")
+
+    return config
 
 
 def _make_output_path(opt, source):
     """Build output path."""
     source_str = str(source.name)
-    if source_str in BOILERPLATE:
-        temp = BOILERPLATE[source_str] / "index.md"
-    if source.suffix == ".md":
-        temp = source.with_suffix("").with_suffix(".html")
-    else:
-        temp = source
+    temp = BOILERPLATE[source_str] / "index.md" if source_str in BOILERPLATE else source
+    temp = temp.with_suffix("").with_suffix(".html") if temp.suffix == ".md" else temp
     result = opt.dst / temp.relative_to(opt.src)
     result.parent.mkdir(parents=True, exist_ok=True)
     return result
@@ -149,7 +184,7 @@ def _render_markdown(opt, env, source, dest):
     rendered_html = template.render(content=raw_html)
 
     doc = BeautifulSoup(rendered_html, "html.parser")
-    for func in [_do_bibliography_links, _do_glossary_links, _do_root_links, _do_title]:
+    for func in [_do_bibliography_links, _do_glossary_links, _do_markdown_links, _do_root_links, _do_title]:
         func(opt, dest, doc)
 
     return str(doc)

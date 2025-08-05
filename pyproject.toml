@@ -26,7 +26,8 @@ classifiers = [
 dependencies = [
     "beautifulsoup4",
     "jinja2",
-    "markdown"
+    "markdown",
+    "tomli"
 ]
 
 [project.optional-dependencies]
