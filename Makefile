@@ -14,8 +14,7 @@ build:
 
 ## lint: check code and project
 lint:
-	@ruff check mccole
-	@ruff check tests
+	@ruff check mccole tests
 
 ## clean: clean up
 clean:

@@ -56,7 +56,7 @@ def _do_title(opt, dest, doc):
         _warn(f"{dest} does not have <title> element")
     try:
         doc.title.string = doc.h1.get_text()
-    except Exception as exc:
+    except Exception:
         _warn(f"{dest} lacks H1 heading")
 
 
