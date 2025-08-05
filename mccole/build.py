@@ -8,6 +8,12 @@ from pathlib import Path
 import sys
 
 
+BOILERPLATE = {
+    "README.md": Path(""),
+    "CODE_OF_CONDUCT.md": Path("conduct"),
+    "CONTRIBUTING.md": Path("contrib"),
+    "LICENSE.md": Path("license"),
+}
 MARKDOWN_EXTENSIONS = ["attr_list", "def_list", "fenced_code", "md_in_html", "tables"]
 
 
@@ -115,6 +121,9 @@ def _is_interesting_file(opt, path):
 
 def _make_output_path(opt, source):
     """Build output path."""
+    source_str = str(source.name)
+    if source_str in BOILERPLATE:
+        temp = BOILERPLATE[source_str] / "index.md"
     if source.suffix == ".md":
         temp = source.with_suffix("").with_suffix(".html")
     else:
