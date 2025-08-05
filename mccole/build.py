@@ -32,12 +32,19 @@ def construct_parser(parser):
     parser.add_argument("--templates", type=Path, default="templates", help="templates directory")
 
 
+def _do_bibliography_links(opt, dest, doc):
+    """Handle 'b:' bibliography links."""
+    for node in doc.select("a[href]"):
+        if not node["href"].startswith("b:"):
+            continue
+        key = node["href"].split(":")[1]
+        node.string = key
+        node["href"] = _make_root_prefix(opt, dest) + f"bibliography/#{key}"
+
+
 def _do_root_links(opt, dest, doc):
     """Handle '@/' links."""
-    relative = dest.relative_to(opt.dst)
-    depth = len(relative.parents) - 1
-    assert depth >= 0
-    prefix = "./" if (depth == 0) else "../" * depth
+    prefix = _make_root_prefix(opt, dest)
     targets = (
         ("a[href]", "href"),
         ("img[src]", "src"),
@@ -111,6 +118,14 @@ def _make_output_path(opt, source):
     return result
 
 
+def _make_root_prefix(opt, path):
+    """Create prefix to root for path."""
+    relative = path.relative_to(opt.dst)
+    depth = len(relative.parents) - 1
+    assert depth >= 0
+    return "./" if (depth == 0) else "../" * depth
+
+
 def _render_markdown(opt, env, source, dest):
     """Convert Markdown to HTML."""
     content = source.read_text()
@@ -119,7 +134,7 @@ def _render_markdown(opt, env, source, dest):
     rendered_html = template.render(content=raw_html)
 
     doc = BeautifulSoup(rendered_html, "html.parser")
-    for func in [_do_root_links, _do_title]:
+    for func in [_do_bibliography_links, _do_root_links, _do_title]:
         func(opt, dest, doc)
 
     return str(doc)
