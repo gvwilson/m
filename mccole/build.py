@@ -70,6 +70,13 @@ def _do_markdown_links(opt, dest, doc):
         node["href"] = f"@/{BOILERPLATE[target]}/"
 
 
+def _do_pre_code_classes(opt, dest, doc):
+    """Add language classes to <pre> elements."""
+    for node in doc.select("pre>code"):
+        cls = node.get("class", [])
+        node.parent["class"] = node.parent.get("class", []) + cls
+
+
 def _do_root_links(opt, dest, doc):
     """Handle '@/' links."""
     prefix = _make_root_prefix(opt, dest)
@@ -184,7 +191,14 @@ def _render_markdown(opt, env, source, dest):
     rendered_html = template.render(content=raw_html)
 
     doc = BeautifulSoup(rendered_html, "html.parser")
-    for func in [_do_bibliography_links, _do_glossary_links, _do_markdown_links, _do_root_links, _do_title]:
+    for func in [
+            _do_bibliography_links,
+            _do_glossary_links,
+            _do_markdown_links,
+            _do_pre_code_classes,
+            _do_root_links,
+            _do_title
+    ]:
         func(opt, dest, doc)
 
     return str(doc)
