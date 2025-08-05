@@ -1,6 +1,7 @@
 """Build HTML site from source files."""
 
 import argparse
+from bs4 import BeautifulSoup
 from jinja2 import Environment, FileSystemLoader
 from markdown import markdown
 from pathlib import Path
@@ -31,6 +32,16 @@ def construct_parser(parser):
     parser.add_argument("--templates", type=Path, default="templates", help="templates directory")
 
 
+def _do_title(dest, doc):
+    """Make sure title element is filled in."""
+    if doc.title is None:
+        _warn(f"{dest} does not have <title> element")
+    try:
+        doc.title.string = doc.h1.get_text()
+    except Exception as exc:
+        _warn(f"{dest} lacks H1 heading")
+
+
 def _find_files(opt):
     """Collect all interesting files."""
     return [
@@ -44,7 +55,7 @@ def _handle_markdown(opt, files):
     env = Environment(loader=FileSystemLoader(opt.templates))
     for source in files:
         dest = _make_output_path(opt, source)
-        html = _render_markdown(opt, env, source)
+        html = _render_markdown(opt, env, source, dest)
         dest.write_text(html)
 
 
@@ -82,12 +93,17 @@ def _make_output_path(opt, source):
     return result
 
 
-def _render_markdown(opt, env, source):
+def _render_markdown(opt, env, source, dest):
     """Convert Markdown to HTML."""
     content = source.read_text()
     template = env.get_template("page.html")
-    html = markdown(content, extensions=MARKDOWN_EXTENSIONS)
-    return template.render(content=html)
+    raw_html = markdown(content, extensions=MARKDOWN_EXTENSIONS)
+    rendered_html = template.render(content=raw_html)
+
+    doc = BeautifulSoup(rendered_html, "html.parser")
+    _do_title(dest, doc)
+
+    return str(doc)
 
 
 def _separate_files(files):
@@ -100,6 +116,11 @@ def _separate_files(files):
         else:
             others.append(path)
     return markdown, others
+
+
+def _warn(msg):
+    """Print warning."""
+    print(msg, file=sys.stderr)
 
 
 if __name__ == "__main__":

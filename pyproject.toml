@@ -23,13 +23,15 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-dependencies = []
+dependencies = [
+  "beautifulsoup4",
+  "jinja2",
+  "markdown"
+]
 
 [project.optional-dependencies]
 dev = [
   "build",
-  "jinja2",
-  "markdown",
   "pytest",
   "ruff",
   "twine"
