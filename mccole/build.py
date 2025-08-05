@@ -32,7 +32,25 @@ def construct_parser(parser):
     parser.add_argument("--templates", type=Path, default="templates", help="templates directory")
 
 
-def _do_title(dest, doc):
+def _do_root_links(opt, dest, doc):
+    """Handle '@/' links."""
+    relative = dest.relative_to(opt.dst)
+    depth = len(relative.parents) - 1
+    assert depth >= 0
+    prefix = "./" if (depth == 0) else "../" * depth
+    targets = (
+        ("a[href]", "href"),
+        ("img[src]", "src"),
+        ("link[href]", "href"),
+        ("script[src]", "src"),
+    )
+    for selector, attr in targets:
+        for node in doc.select(selector):
+            if "@/" in node[attr]:
+                node[attr] = node[attr].replace("@/", prefix)
+
+
+def _do_title(opt, dest, doc):
     """Make sure title element is filled in."""
     if doc.title is None:
         _warn(f"{dest} does not have <title> element")
@@ -101,7 +119,8 @@ def _render_markdown(opt, env, source, dest):
     rendered_html = template.render(content=raw_html)
 
     doc = BeautifulSoup(rendered_html, "html.parser")
-    _do_title(dest, doc)
+    for func in [_do_root_links, _do_title]:
+        func(opt, dest, doc)
 
     return str(doc)
 
