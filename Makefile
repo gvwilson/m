@@ -1,5 +1,7 @@
 # Runnable tasks.
 
+PYTHON = uv run python
+
 all: commands
 
 ## commands: show available commands (*)
@@ -10,7 +12,7 @@ commands:
 
 ## build: build package
 build:
-	python -m build
+	${PYTHON} -m build
 
 ## docs: rebuild documentation
 .PHONY: docs
@@ -20,6 +22,10 @@ docs:
 ## lint: check code and project
 lint:
 	@ruff check mccole tests
+
+## test: run tests with coverage
+test:
+	${PYTHON} -m coverage run -m pytest tests && ${PYTHON} -m coverage report --show-missing
 
 ## clean: clean up
 clean:

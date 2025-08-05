@@ -24,20 +24,21 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-  "beautifulsoup4",
-  "jinja2",
-  "markdown"
+    "beautifulsoup4",
+    "jinja2",
+    "markdown"
 ]
 
 [project.optional-dependencies]
 dev = [
-  "build",
-  "markdown-include",
-  "mkdocs",
-  "mkdocstrings[python]",
-  "pytest",
-  "ruff",
-  "twine"
+    "build",
+    "coverage",
+    "markdown-include",
+    "mkdocs",
+    "mkdocstrings[python]",
+    "pytest",
+    "ruff",
+    "twine"
 ]
 
 [project.scripts]
