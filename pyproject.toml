@@ -32,6 +32,9 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "build",
+  "markdown-include",
+  "mkdocs",
+  "mkdocstrings[python]",
   "pytest",
   "ruff",
   "twine"

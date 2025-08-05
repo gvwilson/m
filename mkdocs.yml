@@ -1,0 +1,19 @@
+site_name: "McCole"
+docs_dir: pages
+site_dir: docs
+
+plugins:
+- mkdocstrings:
+    handlers:
+      python:
+        paths: [./mccole]
+        options:
+          members_order: source
+          filters: []
+
+markdown_extensions:
+- markdown_include.include:
+    base_path: docs
+
+exclude_docs: >
+  *~

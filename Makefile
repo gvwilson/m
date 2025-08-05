@@ -12,6 +12,11 @@ commands:
 build:
 	python -m build
 
+## docs: rebuild documentation
+.PHONY: docs
+docs:
+	mkdocs build
+
 ## lint: check code and project
 lint:
 	@ruff check mccole tests
