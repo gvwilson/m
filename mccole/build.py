@@ -149,22 +149,23 @@ def _is_interesting_file(opt, path):
 
     return True
 
+
 def _load_config(filename):
     """Read configuration data."""
     config = tomli.loads(Path(filename).read_text())
 
     if ("tool" not in config) or ("mccole" not in config["tool"]):
         _warn(f"configuration file {filename} does not have 'tool.mccole'")
-        return {
-            "skips": set()
-        }
+        return {"skips": set()}
 
     config = config["tool"]["mccole"]
     config["skips"] = set(config["skips"]) if "skips" in config else set()
 
     overlap = set(BOILERPLATE.keys()) & config["skips"]
     if overlap:
-        _warn(f"overlap between skips and renames in config {filename}: {', '.join(sorted(overlap))}")
+        _warn(
+            f"overlap between skips and renames in config {filename}: {', '.join(sorted(overlap))}"
+        )
 
     return config
 
@@ -197,12 +198,12 @@ def _render_markdown(opt, env, source, dest):
 
     doc = BeautifulSoup(rendered_html, "html.parser")
     for func in [
-            _do_bibliography_links,
-            _do_glossary_links,
-            _do_markdown_links,
-            _do_pre_code_classes,
-            _do_root_links,
-            _do_title
+        _do_bibliography_links,
+        _do_glossary_links,
+        _do_markdown_links,
+        _do_pre_code_classes,
+        _do_root_links,
+        _do_title,
     ]:
         func(opt, dest, doc)
 

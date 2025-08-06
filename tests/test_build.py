@@ -22,7 +22,9 @@ def test_build_with_no_files_creates_empty_output_directory(bare_fs, build_opt):
     assert len(list(dst.iterdir())) == 0
 
 
-def test_build_with_single_plain_markdown_file_creates_one_output_file(bare_fs, build_opt):
+def test_build_with_single_plain_markdown_file_creates_one_output_file(
+    bare_fs, build_opt
+):
     (bare_fs / build_opt.src / "test.md").write_text("# Title\nbody")
     build(build_opt)
     expected = bare_fs / build_opt.dst / "test.html"
@@ -77,13 +79,13 @@ def test_build_boilerplate_files_correctly_renamed(bare_fs, build_opt):
         ("LICENSE.md", "License", "license"),
         ("README.md", "Project", ""),
     )
-    for (filename, content, _) in fixtures:
-        x = (bare_fs / build_opt.src / filename)
+    for filename, content, _ in fixtures:
+        x = bare_fs / build_opt.src / filename
         x.write_text(f"# {content}\n")
 
     build(build_opt)
 
-    for (filename, content, output) in fixtures:
+    for filename, content, output in fixtures:
         expected = bare_fs / build_opt.dst / output / "index.html"
         assert expected.is_file()
         assert content in expected.read_text()

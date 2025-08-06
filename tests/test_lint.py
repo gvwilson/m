@@ -126,3 +126,31 @@ def test_glossary_key_unused(build_opt, lint_opt, lint_fs, capsys):
 
     captured = capsys.readouterr()
     assert re.search("unused glossary keys: key", captured.err)
+
+
+@pytest.mark.parametrize(
+    "headings,msg",
+    [
+        ["", "has missing/multiple heading(s)"],
+        ["## first\n## second", "has missing/multiple heading(s)"],
+        ["# level 1", "has h1 instead of h3"],
+        ["## level 2", "has h2 instead of h3"],
+        ["#### level 4", "has h4 instead of h3"],
+    ],
+)
+def test_exercise_section_has_bad_headings(
+    build_opt, lint_opt, lint_fs, capsys, headings, msg
+):
+    lines = [
+        "# Title",
+        '<section class="exercise" markdown="1">',
+        headings,
+        "</section>",
+    ]
+    (lint_fs / "test.md").write_text("\n".join(lines))
+
+    build(build_opt)
+    lint(lint_opt)
+
+    captured = capsys.readouterr()
+    assert msg in captured.err
