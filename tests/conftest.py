@@ -1,6 +1,6 @@
 """Test configuration and fixtures."""
 
-from argparse import Namespace
+import argparse
 
 import pytest
 
@@ -30,10 +30,17 @@ def bare_fs(tmp_path):
 
 
 @pytest.fixture
-def opt(bare_fs):
-    return Namespace(
+def build_opt(bare_fs):
+    return argparse.Namespace(
         config=bare_fs / "pyproject.toml",
         dst=bare_fs / "docs",
         src=bare_fs,
         templates=bare_fs / "templates",
+    )
+
+
+@pytest.fixture
+def lint_opt(build_opt):
+    return argparse.Namespace(
+        dst=build_opt.dst,
     )

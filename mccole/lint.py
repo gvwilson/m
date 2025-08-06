@@ -1,6 +1,7 @@
 """Check generated HTML."""
 
 import argparse
+from collections import defaultdict
 from pathlib import Path
 import sys
 
@@ -12,9 +13,10 @@ def lint(opt):
     filepaths = Path(opt.dst).glob("**/*.html")
     pages = {path: BeautifulSoup(path.read_text(), "html.parser") for path in filepaths}
     for func in [
+            _do_glossary_redefinitions,
+            _do_single_h1,
             lambda o, p: _do_special_links(o, p, "bibliography"),
             lambda o, p: _do_special_links(o, p, "glossary"),
-            _do_single_h1
     ]:
         func(opt, pages)
 
@@ -22,6 +24,18 @@ def lint(opt):
 def construct_parser(parser):
     """Parse command-line arguments."""
     parser.add_argument("--dst", type=Path, default="docs", help="output directory")
+
+
+def _do_glossary_redefinitions(opt, pages):
+    """Check for glossary terms that are defined more than once."""
+    seen = defaultdict(list)
+    for path, doc in pages.items():
+        for node in doc.select("a[href]"):
+            if "/glossary/#" in node["href"]:
+                key = node["href"].split("#")[-1]
+                seen[key].append(path)
+    for key, values in seen.items():
+        _require(len(values) == 1, f"glossary entry '{key}' defined in {', '.join(sorted(str(v) for v in values))}")
 
 
 def _do_single_h1(opt, pages):
