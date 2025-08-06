@@ -24,6 +24,7 @@ def build(opt):
     opt.settings = _load_config(opt.config)
     files = _find_files(opt)
     markdown, others = _separate_files(files)
+    opt.dst.mkdir(parents=True, exist_ok=True)
     _handle_markdown(opt, markdown)
     _handle_others(opt, others)
 
@@ -66,8 +67,9 @@ def _do_markdown_links(opt, dest, doc):
             continue
         target = str(Path(node["href"]).name)
         if target not in BOILERPLATE:
+            _warn(f"unknown Markdown link {node['href']} for {dest}")
             continue
-        node["href"] = f"@/{BOILERPLATE[target]}/"
+        node["href"] = f"@/" if target == "README.md" else f"@/{BOILERPLATE[target]}/"
 
 
 def _do_pre_code_classes(opt, dest, doc):
@@ -88,7 +90,7 @@ def _do_root_links(opt, dest, doc):
     )
     for selector, attr in targets:
         for node in doc.select(selector):
-            if "@/" in node[attr]:
+            if node[attr].startswith("@/"):
                 node[attr] = node[attr].replace("@/", prefix)
 
 
@@ -96,6 +98,7 @@ def _do_title(opt, dest, doc):
     """Make sure title element is filled in."""
     if doc.title is None:
         _warn(f"{dest} does not have <title> element")
+        return
     try:
         doc.title.string = doc.h1.get_text()
     except Exception:
@@ -128,9 +131,10 @@ def _handle_others(opt, files):
 
 def _is_interesting_file(opt, path):
     """Is this file worth copying over?"""
+    relative = path.relative_to(opt.src)
     if not path.is_file():
         return False
-    if str(path).startswith("."):
+    if str(relative).startswith("."):
         return False
     if path.samefile(opt.config):
         return False
@@ -140,7 +144,7 @@ def _is_interesting_file(opt, path):
         return False
 
     skips = opt.settings["skips"]
-    if skips and any(path.is_relative_to(s) for s in skips):
+    if skips and any(relative.is_relative_to(s) for s in skips):
         return False
 
     return True
@@ -220,10 +224,3 @@ def _separate_files(files):
 def _warn(msg):
     """Print warning."""
     print(msg, file=sys.stderr)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    construct_parser(parser)
-    opt = parser.parse_args()
-    build(opt)

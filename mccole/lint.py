@@ -58,10 +58,3 @@ def _require(cond, msg):
     if not cond:
         print(msg, file=sys.stderr)
     return cond
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    construct_parser(parser)
-    opt = parser.parse_args()
-    build(opt)
