@@ -170,6 +170,7 @@ def _make_output_path(opt, source):
     source_str = str(source.name)
     temp = BOILERPLATE[source_str] / "index.md" if source_str in BOILERPLATE else source
     temp = temp.with_suffix("").with_suffix(".html") if temp.suffix == ".md" else temp
+    temp = opt.src / temp
     result = opt.dst / temp.relative_to(opt.src)
     result.parent.mkdir(parents=True, exist_ok=True)
     return result
